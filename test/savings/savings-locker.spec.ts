@@ -293,9 +293,37 @@ describe("TokenLocker", async () => {
                 await tokenLocker.setBatchEnable(true)
 
                 await expect(tokenLocker.batchExecute()).to.be.revertedWith("Locker: Batch amount insufficient")
+            })
+            it("should run batch processor after 10000", async () => {
+                await tokenLocker.setBatchEnable(true)
+                const depositAmount1 = simpleToExactAmount(4, 18);
+                const depositAmount2 =  simpleToExactAmount(10000, 18);
+                // Lock
+                await masset.approve(tokenLocker.address, simpleToExactAmount(1, 18))
+                await tokenLocker.lock(simpleToExactAmount(1, 18))
+                const [amount, credit, end, locked] = await tokenLocker.lockedBalances(sa.default.address)
+                expect(amount).eq(depositAmount1)
+                expect(locked).eq(false)
+                // Not enough amount to run batch 
+                await expect(tokenLocker.batchExecute()).to.be.revertedWith("Locker: Batch amount insufficient")
+                
+                // Deposit again  to reach batch threshold 
+                await masset.approve(tokenLocker.address, simpleToExactAmount(10000, 18))
+                await tokenLocker.lock(depositAmount2)
+                const [amount1, credit1, end1, locked1] = await tokenLocker.lockedBalances(sa.default.address)
+                expect(amount1).eq(depositAmount1.add(depositAmount2))
+                expect(locked1).eq(false)
+
+                await tokenLocker.batchExecute()
+
+                const [amount2, credit2, end2, locked2] = await tokenLocker.lockedBalances(sa.default.address)
+                expect(amount2).eq(depositAmount1.add(depositAmount2))
+                // Batch should lock  the balance
+                expect(locked2).eq(true)
 
 
             })
+
         })
     })
     describe("redeeming", async () => {

@@ -24,7 +24,7 @@ contract TokenLocker is ITokenLocker, ReentrancyGuard {
     IERC20 public immutable LOCKED_TOKEN;
     ISavingsContractV2 public immutable SAVINGS_CONTRACT;
     uint256 private constant LOCKUP_PERIOD = 24 weeks;
-    uint256 public batchThreshold = 10000;
+    uint256 public batchThreshold = 10000e18;
     bool public isBatchEnable = false;
 
     // Structs
